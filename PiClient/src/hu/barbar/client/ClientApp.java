@@ -1,6 +1,7 @@
 package hu.barbar.client;
 
 import hu.barbar.comm.client.Client;
+import hu.barbar.comm.util.Msg;
 
 public class ClientApp {
 
@@ -40,22 +41,24 @@ public class ClientApp {
 			}
 			
 			@Override
-			protected void handleRecievedMessage(String message) {
+			protected void handleRecievedMessage(Msg message) {
 				System.out.println("Message received from SERVER: " + message);
 			}
 			
 		};
 		myClient.start();
 		
-		myClient.waitWhileIsOK();
-		if(myClient.isConnected()){
-			System.out.println("Connected");
+		try {
+			Thread.sleep(200);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		
-		if(myClient.sendMessage("dateTime")){
+		if(myClient.sendMessage(new Msg("dateTime"))){
 			System.out.println("Sent: " + "dateTime");
 		}
-		if(myClient.sendMessage("c:LEDS_ON")){
+		if(myClient.sendMessage(new Msg("c:LEDS_ON"))){
 			System.out.println("Sent: " + "c:LEDS_ON");
 		}
 		

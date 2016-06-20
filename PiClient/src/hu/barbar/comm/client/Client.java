@@ -1,9 +1,14 @@
 package hu.barbar.comm.client;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 
 import hu.barbar.comm.util.Commands;
+import hu.barbar.comm.util.Msg;
 
 public abstract class Client extends Thread{
 
@@ -63,29 +68,26 @@ public abstract class Client extends Thread{
 			/**
 			 * Connect to Server
 			 */
-			socket = new Socket(host, port);
-			if(socket.isConnected()){
-				//showOutput("Socket is connected");
+			//showOutput("Socket is connected");
+			
+			System.out.println("Create ClientThread instance");
+			//ObjectInputStream objIn = new ObjectInputStream(socket.getInputStream());
+			//ObjectOutputStream objOut = new ObjectOutputStream(socket.getOutputStream());
+			myClientThread = new ClientThread(socket, host, port) {
 				
-				myClientThread = new ClientThread(socket) {
-					
-					@Override
-					public boolean handleReceivedMessage(String message) {
-						if(me != null){
-							me.handleRecievedMessage(message);
-							return true;
-						}else{
-							return false;
-						}
-						
+				@Override
+				public boolean handleReceivedMessage(Msg message) {
+					if(me != null){
+						me.handleRecievedMessage(message);
+						return true;
+					}else{
+						return false;
 					}
-				};
-				//Thread.sleep(100);
-				myClientThread.start();
-				
-			}else{
-				//TODO
-			}
+					
+				}
+			};
+			myClientThread.start();
+			Thread.sleep(100);
 			
 			showOutput("CLIENT: Connected to server " + host + " @ " + port);
 			connected = true;
@@ -108,7 +110,7 @@ public abstract class Client extends Thread{
 	
 	public void disconnect(){
 		if(this.isConnected()){
-			sendMessage(Commands.CLIENT_EXIT);
+			sendMessage(new Msg(Commands.CLIENT_EXIT));
 			myClientThread.disconnect();
 			try {
 				socket.close();
@@ -123,7 +125,7 @@ public abstract class Client extends Thread{
 		
 	}
 	
-	public boolean sendMessage(String message){
+	public boolean sendMessage(Msg message){
 		boolean retVal = false;
 		if(myClientThread != null){
 			if(message != null){
@@ -137,7 +139,7 @@ public abstract class Client extends Thread{
 		return retVal;
 	}
 	
-	protected abstract void handleRecievedMessage(String message);
+	protected abstract void handleRecievedMessage(Msg message);
 	
 	public boolean waitWhileIsOK(){
 		return this.waitWhileIsOK(TIMEOUT_WAIT_WHILE_IS_OK_IN_MS);
