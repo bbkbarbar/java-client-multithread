@@ -3,6 +3,7 @@ package hu.barbar.comm.client;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.Socket;
@@ -52,16 +53,11 @@ public abstract class ClientThread extends Thread {
 		Msg receivedText = null;
 		try {
 			mySocket = new Socket(host, port);
-		} catch (UnknownHostException e1) {
-			e1.printStackTrace();
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
-		if(mySocket.isClosed()){
-			System.out.println("Socket is CLOSED.");
-		}
 		
-		try {
+			if(mySocket.isClosed()){
+				System.out.println("Socket is CLOSED.");
+			}
+		
 			//in = new BufferedReader(new InputStreamReader(mySocket.getInputStream()));
 			//out = new PrintWriter(mySocket.getOutputStream(), true);
 			System.out.println("Init streams.");
@@ -87,8 +83,12 @@ public abstract class ClientThread extends Thread {
 				}
 			}
 			
+		} catch (IOException e1) {
+			System.out.println(e1.toString());
+			e1.printStackTrace();
 		} catch (Exception e) {
 			// TODO handle exception
+			System.out.println(e.toString());
 			e.printStackTrace();
 		}
 		
@@ -121,6 +121,11 @@ public abstract class ClientThread extends Thread {
 			return false;
 		}
 	}
+	
+	public ObjectOutputStream getObjOut() {
+		return this.objOut;
+	}
+	
 	
 	public abstract boolean handleReceivedMessage(Msg message);
 	

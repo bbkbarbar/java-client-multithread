@@ -1,16 +1,14 @@
 package hu.barbar.comm.client;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.net.Socket;
 
-import hu.barbar.comm.util.Commands;
+import javax.sound.midi.Receiver;
+
 import hu.barbar.comm.util.Msg;
 
-public abstract class Client extends Thread{
+public abstract class Client extends Thread {
 
 	public static final int versionCode = 101;
 	public static final String version = "1.0.1";
@@ -19,15 +17,21 @@ public abstract class Client extends Thread{
 	protected int TIMEOUT_WAIT_WHILE_IS_OK_IN_MS = 1000;
 			
 	private Client me;
+	protected SenderThread sender = null;
+    protected ReceiverThread receiver = null;
+    private ObjectInputStream objIn = null;
+    private ObjectOutputStream objOut = null;
 	
 	private String host = null;
 	private int port = 0;
 	
 	private Socket socket = null;
-	private boolean connected = false;
+	private boolean initialized = false;
 	
 	private ClientThread myClientThread = null;
 
+	
+	
 	public Client() {
 		super();
 		me = Client.this;
@@ -37,7 +41,6 @@ public abstract class Client extends Thread{
 		super();
 		this.host = host;
 		this.port = port;
-		connected = false;
 		me = Client.this;
 	}
 	
@@ -45,135 +48,99 @@ public abstract class Client extends Thread{
 		super();
 		this.host = host;
 		this.port = port;
-		connected = false;
 		me = Client.this;
 		this.TIMEOUT_WAIT_WHILE_IS_OK_IN_MS = timeOutForIsOK;
 	}
 	
 	@Override
 	public void run() {
-		this.connect();
-		super.run();
+		this.connect(host);
+		//super.run();
 	}
 	
-	public boolean connect(){
+	/**
+     *  Connect to specified host
+     * @param host
+     */
+	protected void connect(String host) {
 		
-		if (host == null) {
-			showOutput("hostname is null");
-			connected = false;
-			return false;
+		if(host == null){
+			
+			return;
 		}
 		
 		try {
-			/**
-			 * Connect to Server
-			 */
-			//showOutput("Socket is connected");
+            
+        	/**
+        	 *  Connect to Server
+        	 */
+			socket = new Socket(host, port);
+			objOut = new ObjectOutputStream(socket.getOutputStream());
+			objIn = new ObjectInputStream(socket.getInputStream());								
 			
-			System.out.println("Create ClientThread instance");
-			//ObjectInputStream objIn = new ObjectInputStream(socket.getInputStream());
-			//ObjectOutputStream objOut = new ObjectOutputStream(socket.getOutputStream());
-			myClientThread = new ClientThread(socket, host, port) {
-				
-				@Override
-				public boolean handleReceivedMessage(Msg message) {
-					if(me != null){
-						me.handleRecievedMessage(message);
-						return true;
-					}else{
-						return false;
-					}
-					
-				}
-			};
-			myClientThread.start();
-			Thread.sleep(100);
+			System.out.println("Streams created.\nConnected to server " + host + " @ " + this.port);
+           
+        } catch (Exception ioe) {
+        	System.err.println("Can not establish connection to " +  host + " @ " + port);
+        	ioe.printStackTrace();
+        	//System.exit(-1);
+        	return;
+        }
+ 
+		
+		/**
+		 *  Create and start Sender thread
+		 */
+		//this.userName = getUsername();
+        //sender = new Sender(out, this.userName);
+		sender = new SenderThread(objOut);
+		System.out.println("Sender created.");
+        sender.setDaemon(true);
+        sender.start();
+ 
+
+        /**
+		 *  Receiver
+		 */
+		this.receiver = new ReceiverThread(objIn) {
+			@Override
+			protected void handleMessage(Msg message) {
+				handleRecievedMessage(message);
+			}
 			
-			showOutput("CLIENT: Connected to server " + host + " @ " + port);
-			connected = true;
-			//Client.this.onConnected();
-			return true;
-			
-		} catch (Exception e) {
-			showOutput("Can not establish connection to " + host + " @ " + port);
+		};
+		receiver.start();
+		
+		initialized = true;
+		
+		/**
+		 *  Get current user-count..
+		 */
+		try {
+			Thread.sleep(500);
+		} catch (InterruptedException e) {
 			e.printStackTrace();
-			showOutput(e.toString());
-			connected = false;
-			return false;
 		}
 		
+	}
+
+	public boolean isInitialized(){
+		return this.initialized;
 	}
 	
 	public void onConnected() {}
 
 	public void onDisconnected(){}
 	
-	public void disconnect(){
-		if(this.isConnected()){
-			sendMessage(new Msg(Commands.CLIENT_EXIT));
-			myClientThread.disconnect();
-			try {
-				socket.close();
-			} catch (IOException e) {}
-			try{
-				myClientThread.interrupt();
-			}catch(Exception e){
-			}finally{
-				onDisconnected();
-			}
-		}
-		
-	}
-	
-	public boolean sendMessage(Msg message){
-		boolean retVal = false;
-		if(myClientThread != null){
-			if(message != null){
-				retVal = myClientThread.sendMessageToServer(message);
-			}else{
-				showOutput("Can not send message: message is null");
-			}
-		}else{
-			showOutput("Can not send message: clientThread is null");
-		}
-		return retVal;
-	}
-	
 	protected abstract void handleRecievedMessage(Msg message);
 	
-	public boolean waitWhileIsOK(){
-		return this.waitWhileIsOK(TIMEOUT_WAIT_WHILE_IS_OK_IN_MS);
-	}
-	
-	public boolean waitWhileIsOK(int timeoutInMs){
-		
-		if(this.isOK()){
-			return true;
-		}
-		
-		int attempCount = 0;
-		int maxAttemps = (timeoutInMs / 50);
-		if (maxAttemps < 1){
-			maxAttemps = 1;
-		}
-		while(this.isOK() == false && attempCount < maxAttemps){
-			attempCount++;
-			try {
-				Thread.sleep(50);
-			} catch (InterruptedException e) {}
-		}
-		
-		return this.isOK();
-	}
 	
 	protected abstract void showOutput(String text);
 
 
 	public boolean isConnected(){
-		if (socket == null){
-			return false;
-		}
-		return socket.isConnected() && this.connected;
+		//TODO
+		return false;
 	}
 
 
@@ -203,16 +170,24 @@ public abstract class Client extends Thread{
 	}
 
 	
-	public boolean isOK() {
-		return (myClientThread != null && myClientThread.isOK());
-	}
-
 	public static int getVersioncode() {
 		return versionCode;
 	}
 
 	public static String getVersion() {
 		return version;
+	}
+
+	public boolean sendMessage(Msg msg) {
+		if(msg == null)
+			return false;
+		sender.sendMsg(msg);
+		return true;
+	}
+
+	public void disconnect() {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

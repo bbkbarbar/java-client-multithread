@@ -42,25 +42,34 @@ public class ClientApp {
 			
 			@Override
 			protected void handleRecievedMessage(Msg message) {
-				System.out.println("Message received from SERVER: " + message);
+				System.out.println("Message received from SERVER: " + message.getLine());
 			}
 			
 		};
 		myClient.start();
 		
+		System.out.println("Clint:: clientThread started");
+		
 		try {
-			Thread.sleep(200);
+			int attempCount = 0;
+			while(myClient.isInitialized() == false && attempCount < 10){
+				Thread.sleep(200);
+				attempCount++;
+			}
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
+		System.out.println("CLIENT IS INITILAIZED");
+		
 		if(myClient.sendMessage(new Msg("dateTime"))){
 			System.out.println("Sent: " + "dateTime");
 		}
-		if(myClient.sendMessage(new Msg("c:LEDS_ON"))){
+		/*
+		 if(myClient.sendMessage(new Msg("c:LEDS_ON"))){
 			System.out.println("Sent: " + "c:LEDS_ON");
-		}
+		}/**/
 		
 		myClient.disconnect();
 		
