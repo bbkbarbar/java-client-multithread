@@ -2,6 +2,7 @@ package hu.barbar.client;
 
 import hu.barbar.comm.client.Client;
 import hu.barbar.comm.util.Msg;
+import hu.barbar.comm.util.RGBMessage;
 import hu.barbar.util.LogManager;
 
 public class ClientApp {
@@ -63,7 +64,13 @@ public class ClientApp {
 			
 			@Override
 			protected void handleRecievedMessage(Msg message) {
-				System.out.println("Message received from SERVER: " + message.getLine());
+				System.out.println("Message received from SERVER: " + message.getContent());
+				System.out.println(message.toString());
+			}
+			
+			@Override
+			public void onConnectionRefused(String host, int port) {
+				System.out.println("Connection refused (" + host + " @ " + port + ").");
 			}
 			
 		};
@@ -75,33 +82,21 @@ public class ClientApp {
 		if(myClient.waitWhileIsInitialized()){
 			System.out.println("CLIENT IS INITILAIZED");
 		}
+		// wait for answer..
+		try {
+			Thread.sleep(200);
+		} catch (InterruptedException e) {} /**/
 		
-		if(myClient.sendMessage(new Msg("dateTime"))){
+		if(myClient.sendMessage(new Msg("dateTime", Msg.Types.COMMAND))){
 			System.out.println("Sent: " + "dateTime");
 		}
 		
-		// wait for answer..
-		try {
-			Thread.sleep(500);
-		} catch (InterruptedException e) {
+		if(myClient.sendMessage(new RGBMessage("setAll", 255,17,127))){
+			System.out.println("Sent: " + "Color");
 		}
 		
-		/*
-		 if(myClient.sendMessage(new Msg("c:LEDS_ON"))){
-			System.out.println("Sent: " + "c:LEDS_ON");
-		}/**/
 		
 		myClient.disconnect();
-		
-		/*BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-		String custMsg = "ERROR";
-		try {
-			custMsg = br.readLine();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		myClient.sendMessage(custMsg);
-		/**/
 
 	}
 	

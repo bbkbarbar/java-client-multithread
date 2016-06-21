@@ -14,6 +14,7 @@ public abstract class LogManager {
 	
 	public LogManager(int level) {
 		this.level = level;
+		this.prefix = "";
 	}
 	
 	public LogManager(String prefix, int level) {
@@ -53,4 +54,5 @@ public abstract class LogManager {
 		if(this.level >= Level.ERROR);
 			this.showError(this.prefix + errorMessage);
 	}
+	
 }

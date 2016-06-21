@@ -1,6 +1,5 @@
 package hu.barbar.comm.client;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -76,7 +75,6 @@ public abstract class Client extends Thread {
 	protected void connect(String host) {
 		
 		if(host == null){
-			
 			return;
 		}
 		
@@ -95,7 +93,12 @@ public abstract class Client extends Thread {
 			
 			if(log != null)
 				log.i("Connected to server " + host + " @ " + this.port);
-           
+			
+		} catch (java.net.ConnectException ce){
+			
+			this.onConnectionRefused(host, port);
+			return;
+			/**/
         } catch (Exception ioe) {
         	if(log != null)
 				log.w("Can not establish connection to " +  host + " @ " + port);
@@ -132,26 +135,24 @@ public abstract class Client extends Thread {
 		initialized = true;
 		
 		//TODO: maybe removable:
-		/**
-		 *  Get current user-count..
-		 */
 		try {
-			Thread.sleep(500);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+			Thread.sleep(200);
+		} catch (InterruptedException e) {}
 		
-		this.onConnected();
+		this.onConnected(host, port);
 		
+		return;
 	}
 
 	public boolean isInitialized(){
 		return this.initialized;
 	}
 	
-	public void onConnected() {}
+	public void onConnected(String host, int port){}
 
-	public void onDisconnected(){}
+	public void onDisconnected(String host, int port){}
+	
+	public void onConnectionRefused(String host, int port){}
 	
 	protected abstract void handleRecievedMessage(Msg message);
 	
@@ -221,6 +222,10 @@ public abstract class Client extends Thread {
 	public boolean sendMessage(Msg msg) {
 		if(msg == null)
 			return false;
+		if(initialized == false){
+			System.out.println("Can not send message. Connection is NOT initialized.");
+			return false;
+		}
 		sender.sendMsg(msg);
 		return true;
 	}
@@ -231,29 +236,33 @@ public abstract class Client extends Thread {
 		Msg byeMsg = new Msg(Commands.CLIENT_EXIT, Msg.Types.COMMAND);
 		this.sendMessage(byeMsg);
 		
-		receiver.interrupt();
-		sender.interrupt();
+		try {
+			receiver.interrupt();
+		} catch (Exception e) {}
+		try {
+			sender.interrupt();
+		} catch (Exception e) {}
 		
 		try {
 			objIn.close();
-		} catch (IOException e) {}
+		} catch (Exception e) {}
 		try {
 			objOut.close();
-		} catch (IOException e) {}
+		} catch (Exception e) {}
 		try {
 			is.close();
-		} catch (IOException e) {}
+		} catch (Exception e) {}
 		try {
 			os.close();
-		} catch (IOException e) {}
+		} catch (Exception e) {}
 		try {
 			socket.close();
-		} catch (IOException e) {}
+		} catch (Exception e) {}
 		
 		
 		this.initialized = false;
 		
-		this.onDisconnected();
+		this.onDisconnected(host, port);
 		
 	}
 	
