@@ -50,22 +50,20 @@ public class ClientApp {
 		
 		System.out.println("Clint:: clientThread started");
 		
-		try {
-			int attempCount = 0;
-			while(myClient.isInitialized() == false && attempCount < 10){
-				Thread.sleep(200);
-				attempCount++;
-			}
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		if(myClient.waitWhileIsInitialized()){
+			System.out.println("CLIENT IS INITILAIZED");
 		}
-		
-		System.out.println("CLIENT IS INITILAIZED");
 		
 		if(myClient.sendMessage(new Msg("dateTime"))){
 			System.out.println("Sent: " + "dateTime");
 		}
+		
+		// wait for answer..
+		try {
+			Thread.sleep(500);
+		} catch (InterruptedException e) {
+		}
+		
 		/*
 		 if(myClient.sendMessage(new Msg("c:LEDS_ON"))){
 			System.out.println("Sent: " + "c:LEDS_ON");

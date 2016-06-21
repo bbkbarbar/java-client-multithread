@@ -8,12 +8,14 @@ import hu.barbar.comm.util.Msg;
 public abstract class ReceiverThread extends Thread {
 
 	private ObjectInputStream objIn = null;
+	private Client myParent = null;
 	
 	/**
 	 * @param in ObjectInputStream from client's socket.
 	 */
-	public ReceiverThread(ObjectInputStream in){
+	public ReceiverThread(ObjectInputStream in, Client parent){
 		this.objIn = in;
+		this.myParent = parent;
 	}
 	
 	@Override
@@ -28,9 +30,10 @@ public abstract class ReceiverThread extends Thread {
 			}
 			
 		} catch (IOException e) {
-			e.printStackTrace();
-			System.out.println("IOException while try to read message from server..");
-			System.out.println("Client.Receiver.run() -> IOException");
+			if(myParent.getWantToDisconnect() == false){
+				System.out.println("IOException while try to read message from server..");
+				System.out.println("Client.Receiver.run() -> IOException");
+			}
 		} catch (ClassNotFoundException e) {
 			System.out.println("Client.Receiver.run() -> ClassNotFoundException");
 			e.printStackTrace();

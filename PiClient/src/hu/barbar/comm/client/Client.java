@@ -1,11 +1,13 @@
 package hu.barbar.comm.client;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 
-import javax.sound.midi.Receiver;
-
+import hu.barbar.comm.util.Commands;
 import hu.barbar.comm.util.Msg;
 
 public abstract class Client extends Thread {
@@ -14,11 +16,15 @@ public abstract class Client extends Thread {
 	public static final String version = "1.0.1";
 	
 	
-	protected int TIMEOUT_WAIT_WHILE_IS_OK_IN_MS = 1000;
+	protected int TIMEOUT_WAIT_WHILE_INITIALIZED_IN_MS = 1000;
+	private static final int DELAY_BETWEEN_CHECKS_FOR_INITIALIZED_STATE_IN_MS = 50;
 			
 	private Client me;
 	protected SenderThread sender = null;
     protected ReceiverThread receiver = null;
+    
+    private InputStream is = null;
+    private OutputStream os = null;
     private ObjectInputStream objIn = null;
     private ObjectOutputStream objOut = null;
 	
@@ -27,6 +33,7 @@ public abstract class Client extends Thread {
 	
 	private Socket socket = null;
 	private boolean initialized = false;
+	private boolean wantToDisconnect = false;
 	
 	private ClientThread myClientThread = null;
 
@@ -49,13 +56,13 @@ public abstract class Client extends Thread {
 		this.host = host;
 		this.port = port;
 		me = Client.this;
-		this.TIMEOUT_WAIT_WHILE_IS_OK_IN_MS = timeOutForIsOK;
+		this.TIMEOUT_WAIT_WHILE_INITIALIZED_IN_MS = timeOutForIsOK;
 	}
 	
 	@Override
 	public void run() {
 		this.connect(host);
-		//super.run();
+		super.run();
 	}
 	
 	/**
@@ -69,14 +76,18 @@ public abstract class Client extends Thread {
 			return;
 		}
 		
+		this.wantToDisconnect = true;
+		
 		try {
             
         	/**
         	 *  Connect to Server
         	 */
 			socket = new Socket(host, port);
-			objOut = new ObjectOutputStream(socket.getOutputStream());
-			objIn = new ObjectInputStream(socket.getInputStream());								
+			os = socket.getOutputStream();
+			is = socket.getInputStream();
+			objOut = new ObjectOutputStream(os);
+			objIn = new ObjectInputStream(is);								
 			
 			System.out.println("Streams created.\nConnected to server " + host + " @ " + this.port);
            
@@ -100,9 +111,9 @@ public abstract class Client extends Thread {
  
 
         /**
-		 *  Receiver
+		 *  Create and start Receiver thread
 		 */
-		this.receiver = new ReceiverThread(objIn) {
+		this.receiver = new ReceiverThread(objIn, Client.this) {
 			@Override
 			protected void handleMessage(Msg message) {
 				handleRecievedMessage(message);
@@ -113,6 +124,7 @@ public abstract class Client extends Thread {
 		
 		initialized = true;
 		
+		//TODO: maybe removable:
 		/**
 		 *  Get current user-count..
 		 */
@@ -121,6 +133,8 @@ public abstract class Client extends Thread {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+		
+		this.onConnected();
 		
 	}
 
@@ -177,6 +191,25 @@ public abstract class Client extends Thread {
 	public static String getVersion() {
 		return version;
 	}
+	
+	
+	public boolean waitWhileIsInitialized(){
+		int maxTries = TIMEOUT_WAIT_WHILE_INITIALIZED_IN_MS / DELAY_BETWEEN_CHECKS_FOR_INITIALIZED_STATE_IN_MS;
+		if(maxTries<1){
+			maxTries = 1;
+		}
+		try {
+			int attempCount = 0;
+			while(this.isInitialized() == false && attempCount < maxTries){
+				Thread.sleep(DELAY_BETWEEN_CHECKS_FOR_INITIALIZED_STATE_IN_MS);
+				attempCount++;
+			}
+		} catch (InterruptedException e) {
+			// Do nothing..
+		}
+		return this.initialized;
+	}
+	
 
 	public boolean sendMessage(Msg msg) {
 		if(msg == null)
@@ -186,8 +219,39 @@ public abstract class Client extends Thread {
 	}
 
 	public void disconnect() {
-		// TODO Auto-generated method stub
 		
+		this.wantToDisconnect = true;
+		Msg byeMsg = new Msg(Commands.CLIENT_EXIT, Msg.Types.COMMAND);
+		this.sendMessage(byeMsg);
+		
+		receiver.interrupt();
+		sender.interrupt();
+		
+		try {
+			objIn.close();
+		} catch (IOException e) {}
+		try {
+			objOut.close();
+		} catch (IOException e) {}
+		try {
+			is.close();
+		} catch (IOException e) {}
+		try {
+			os.close();
+		} catch (IOException e) {}
+		try {
+			socket.close();
+		} catch (IOException e) {}
+		
+		
+		this.initialized = false;
+		
+		this.onDisconnected();
+		
+	}
+	
+	public boolean getWantToDisconnect(){
+		return this.wantToDisconnect;
 	}
 
 }
