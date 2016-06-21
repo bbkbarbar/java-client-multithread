@@ -4,13 +4,17 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 
 import hu.barbar.comm.util.Msg;
+import hu.barbar.util.LogManager;
 
 public class SenderThread extends Thread {
 
 	private ObjectOutputStream objOut = null;
 	
-	public SenderThread(ObjectOutputStream aOut){
+	private LogManager log = null;
+	
+	public SenderThread(ObjectOutputStream aOut, LogManager l){
 		this.objOut = aOut;
+		this.log = l;
 	}
 	
 	public void sendMsg(Msg msg) {
@@ -21,7 +25,8 @@ public class SenderThread extends Thread {
 			return;
 			
 		} catch (IOException e) {
-			System.out.println("Client.SenderThread.sendMsg() -> IOException catched.");
+			if(log != null)
+				log.e("Client.SenderThread.sendMsg() -> IOException catched.");
 			e.printStackTrace();
 		}
 		

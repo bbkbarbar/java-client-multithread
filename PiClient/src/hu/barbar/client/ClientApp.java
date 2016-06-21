@@ -2,6 +2,7 @@ package hu.barbar.client;
 
 import hu.barbar.comm.client.Client;
 import hu.barbar.comm.util.Msg;
+import hu.barbar.util.LogManager;
 
 public class ClientApp {
 
@@ -16,6 +17,7 @@ public class ClientApp {
 	public String SERVER_HOSTNAME = DEFAULT_SERVER_HOSTNAME;
 	public int SERVER_PORT = -1;
 
+	private LogManager log = null;
 	private Client myClient = null;
 	
 	//TODO
@@ -32,7 +34,26 @@ public class ClientApp {
 	}
 
 	private void start(String[] args) {
+		
+		this.log = new LogManager("Client", LogManager.Level.INFO){
 
+			@Override
+			public void showInfo(String text) {
+				System.out.println(text);
+			}
+
+			@Override
+			public void showWarn(String text) {
+				System.out.println(text);
+			}
+
+			@Override
+			public void showError(String text) {
+				System.out.println(text);
+			}
+			
+		};
+		
 		myClient = new Client(DEFAULT_SERVER_HOSTNAME, DEFAULT_SERVER_PORT) {
 			
 			@Override
@@ -46,6 +67,7 @@ public class ClientApp {
 			}
 			
 		};
+		myClient.setLogManager(log);
 		myClient.start();
 		
 		System.out.println("Clint:: clientThread started");

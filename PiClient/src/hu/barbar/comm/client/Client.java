@@ -9,17 +9,20 @@ import java.net.Socket;
 
 import hu.barbar.comm.util.Commands;
 import hu.barbar.comm.util.Msg;
+import hu.barbar.util.LogManager;
 
 public abstract class Client extends Thread {
 
-	public static final int versionCode = 101;
-	public static final String version = "1.0.1";
+	public static final int versionCode = 200;
+	public static final String version = "2.0.0";
 	
 	
 	protected int TIMEOUT_WAIT_WHILE_INITIALIZED_IN_MS = 1000;
 	private static final int DELAY_BETWEEN_CHECKS_FOR_INITIALIZED_STATE_IN_MS = 50;
+	
+	private LogManager log = null;
 			
-	private Client me;
+	//private Client me;
 	protected SenderThread sender = null;
     protected ReceiverThread receiver = null;
     
@@ -35,28 +38,29 @@ public abstract class Client extends Thread {
 	private boolean initialized = false;
 	private boolean wantToDisconnect = false;
 	
-	private ClientThread myClientThread = null;
 
-	
-	
 	public Client() {
 		super();
-		me = Client.this;
+		//me = Client.this;
 	}
 	
 	public Client(String host, int port) {
 		super();
 		this.host = host;
 		this.port = port;
-		me = Client.this;
+		//me = Client.this;
 	}
 	
 	public Client(String host, int port, int timeOutForIsOK) {
 		super();
 		this.host = host;
 		this.port = port;
-		me = Client.this;
+		//me = Client.this;
 		this.TIMEOUT_WAIT_WHILE_INITIALIZED_IN_MS = timeOutForIsOK;
+	}
+	
+	public void setLogManager(LogManager l){
+		this.log = l;
 	}
 	
 	@Override
@@ -89,10 +93,12 @@ public abstract class Client extends Thread {
 			objOut = new ObjectOutputStream(os);
 			objIn = new ObjectInputStream(is);								
 			
-			System.out.println("Streams created.\nConnected to server " + host + " @ " + this.port);
+			if(log != null)
+				log.i("Connected to server " + host + " @ " + this.port);
            
         } catch (Exception ioe) {
-        	System.err.println("Can not establish connection to " +  host + " @ " + port);
+        	if(log != null)
+				log.w("Can not establish connection to " +  host + " @ " + port);
         	ioe.printStackTrace();
         	//System.exit(-1);
         	return;
@@ -104,8 +110,9 @@ public abstract class Client extends Thread {
 		 */
 		//this.userName = getUsername();
         //sender = new Sender(out, this.userName);
-		sender = new SenderThread(objOut);
-		System.out.println("Sender created.");
+		sender = new SenderThread(objOut, log);
+		if(log != null)
+			log.i("Sender created.");
         sender.setDaemon(true);
         sender.start();
  
@@ -113,7 +120,7 @@ public abstract class Client extends Thread {
         /**
 		 *  Create and start Receiver thread
 		 */
-		this.receiver = new ReceiverThread(objIn, Client.this) {
+		this.receiver = new ReceiverThread(objIn, Client.this, log) {
 			@Override
 			protected void handleMessage(Msg message) {
 				handleRecievedMessage(message);
