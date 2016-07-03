@@ -12,7 +12,7 @@ public class ClientApp {
 	private static final boolean DEBUG_MODE = false;
 
 	public static String ver = "0.1";
-	public static final String DEFAULT_SERVER_HOSTNAME = (DEBUG_MODE ? "localhost" : "localhost");
+	public static final String DEFAULT_SERVER_HOSTNAME = (DEBUG_MODE ? "localhost" : "192.168.0.105");
 	public static final int DEFAULT_SERVER_PORT = (DEBUG_MODE ? 13003 : 10713);
 
 	public String SERVER_HOSTNAME = DEFAULT_SERVER_HOSTNAME;
@@ -84,17 +84,26 @@ public class ClientApp {
 		}
 		// wait for answer..
 		try {
-			Thread.sleep(200);
-		} catch (InterruptedException e) {} /**/
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			System.out.println("InterruptedException in ClientApp");
+		} /**/
 		
 		if(myClient.sendMessage(new Msg("dateTime", Msg.Types.COMMAND))){
 			System.out.println("Sent: " + "dateTime");
 		}
 		
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {}
+		
+		System.out.println("waiting...");
+		
 		if(myClient.sendMessage(new RGBMessage("setAll", 255,17,127))){
 			System.out.println("Sent: " + "Color");
 		}
 		
+		System.out.println("Color sent...");
 		
 		myClient.disconnect();
 
