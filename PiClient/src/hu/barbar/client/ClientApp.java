@@ -14,7 +14,7 @@ public class ClientApp {
 	public static String ver = "0.1";
 	public static final String DEFAULT_SERVER_HOSTNAME = (DEBUG_MODE ? "localhost" : "barbarhome.ddns.net");
 	//public static final String DEFAULT_SERVER_HOSTNAME = (DEBUG_MODE ? "localhost" : "192.168.0.101");
-	public static final int DEFAULT_SERVER_PORT = (DEBUG_MODE ? 13003 : 10713);
+	public static final int DEFAULT_SERVER_PORT = (DEBUG_MODE ? 13003 : 10714);
 
 	public String SERVER_HOSTNAME = DEFAULT_SERVER_HOSTNAME;
 	public int SERVER_PORT = -1;
@@ -65,8 +65,13 @@ public class ClientApp {
 			
 			@Override
 			protected void handleRecievedMessage(Msg message) {
-				System.out.println("Message received from SERVER: " + message.getContent());
+				if(message.getContent().startsWith("Temp: ")){
+					String[] result = message.getContent().split(" ");
+					System.out.println("Temp: " + result[result.length-1] + "C");
+				}else{
+					System.out.println("\nMessage received from SERVER: " + message.getContent());
 				System.out.println(message.toString());
+			}
 			}
 			
 			@Override
@@ -82,29 +87,36 @@ public class ClientApp {
 		
 		if(myClient.waitWhileIsInitialized()){
 			System.out.println("CLIENT IS INITILAIZED");
-			// wait for answer..
+
+			
+			if(myClient.sendMessage(new Msg("dateTime", Msg.Types.COMMAND))){
+				System.out.println("Sent: " + "dateTime");
+			}
+			
+			if(myClient.sendMessage(new RGBMessage("setAll", 255,127,0))){
+				System.out.println("Sent: " + "Color");
+			}
+
+			// wait a little ..
 			try {
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
 				System.out.println("InterruptedException in ClientApp");
 			} /**/
 			
-			if(myClient.sendMessage(new Msg("dateTime", Msg.Types.COMMAND))){
-				System.out.println("Sent: " + "dateTime");
+			if(myClient.sendMessage(new Msg("readTemp", Msg.Types.COMMAND))){
+				System.out.println("Sent: " + "readTemp");
 			}
 			
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {}
-			
-			System.out.println("waiting...");
-			
-			if(myClient.sendMessage(new RGBMessage("setAll", 255,17,127))){
-				System.out.println("Sent: " + "Color");
-			}
-			
-			System.out.println("Color sent...");
 		}
+		
+
+		// wait before disconnect..
+		try {
+			Thread.sleep(4000);
+		} catch (InterruptedException e) {
+			System.out.println("InterruptedException in ClientApp");
+		} /**/
 		
 		
 		myClient.disconnect();
