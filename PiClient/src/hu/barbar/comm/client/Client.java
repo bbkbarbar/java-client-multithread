@@ -1,9 +1,13 @@
 package hu.barbar.comm.client;
 
+import java.io.BufferedReader;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.net.Socket;
 
 import hu.barbar.comm.util.Commands;
@@ -27,8 +31,10 @@ public abstract class Client extends Thread {
     
     private InputStream is = null;
     private OutputStream os = null;
-    private ObjectInputStream objIn = null;
-    private ObjectOutputStream objOut = null;
+    //private ObjectInputStream objIn = null;
+    private BufferedReader in = null;
+    //private ObjectOutputStream objOut = null;
+	private PrintWriter out = null;
 	
 	private String host = null;
 	private int port = 0;
@@ -89,8 +95,10 @@ public abstract class Client extends Thread {
 			socket = new Socket(host, port);
 			os = socket.getOutputStream();
 			is = socket.getInputStream();
-			objOut = new ObjectOutputStream(os);
-			objIn = new ObjectInputStream(is);								
+			//objOut = new ObjectOutputStream(os);
+			in = new BufferedReader(new InputStreamReader(is));
+			//objIn = new ObjectInputStream(is);
+			out = new PrintWriter(new PrintStream(os), true); 
 			
 			if(log != null)
 				log.w("Connected to server " + host + " @ " + this.port);
@@ -111,7 +119,8 @@ public abstract class Client extends Thread {
         /**
 		 *  Create and start Receiver thread
 		 */
-		this.receiver = new ReceiverThread(objIn, Client.this, log) {
+		//this.receiver = new ReceiverThread(objIn, Client.this, log) {
+		this.receiver = new ReceiverThread(in, Client.this, log) {
 			@Override
 			protected void handleMessage(Msg message) {
 				handleRecievedMessage(message);
@@ -123,7 +132,8 @@ public abstract class Client extends Thread {
 		/**
 		 *  Create and start Sender thread
 		 */
-		sender = new SenderThread(objOut, log);
+		//sender = new SenderThread(objOut, log);
+		sender = new SenderThread(out, log);
 		if(log != null)
 			log.d("Sender created.");
 
@@ -244,10 +254,12 @@ public abstract class Client extends Thread {
 		} catch (Exception e) {}
 		
 		try {
-			objIn.close();
+			//objIn.close();
+			in.close();
 		} catch (Exception e) {}
 		try {
-			objOut.close();
+			//objOut.close();
+			out.close();
 		} catch (Exception e) {}
 		try {
 			is.close();
