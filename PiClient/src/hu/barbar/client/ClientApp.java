@@ -1,8 +1,11 @@
 package hu.barbar.client;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+
 import hu.barbar.comm.client.Client;
+import hu.barbar.comm.util.Commands;
 import hu.barbar.comm.util.Msg;
-import hu.barbar.comm.util.RGBMessage;
 import hu.barbar.util.LogManager;
 
 public class ClientApp {
