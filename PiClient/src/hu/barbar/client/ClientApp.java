@@ -37,7 +37,7 @@ public class ClientApp {
 
 	private void start(String[] args) {
 		
-		this.log = new LogManager("Client", LogManager.Level.INFO){
+		this.log = new LogManager("Client ::", LogManager.Level.WARN){
 
 			@Override
 			public void showInfo(String text) {
@@ -67,7 +67,7 @@ public class ClientApp {
 			protected void handleRecievedMessage(Msg message) {
 				if(message.getContent().startsWith("Temp: ")){
 					String[] result = message.getContent().split(" ");
-					System.out.println("Temp: " + result[result.length-1] + "C");
+					System.out.println("\nTemp: " + result[result.length-1] + "C");
 				}else{
 					System.out.println("\nMessage received from SERVER: " + message.getContent());
 				System.out.println(message.toString());
@@ -83,19 +83,25 @@ public class ClientApp {
 		myClient.setLogManager(log);
 		myClient.start();
 		
-		System.out.println("Clint:: clientThread started");
-		
 		if(myClient.waitWhileIsInitialized()){
 			System.out.println("CLIENT IS INITILAIZED");
 
 			
-			if(myClient.sendMessage(new Msg("dateTime", Msg.Types.COMMAND))){
-				System.out.println("Sent: " + "dateTime");
+			Msg msg = new Msg(Commands.GET_DATE, Msg.Types.REQUEST);
+			if(myClient.sendMessage(msg)){
+				System.out.println("Sent: " + Commands.GET_DATE); 
 			}
+			readLine();
+
+			if(myClient.sendMessage(new Msg(Commands.GET_CLIENT_COUNT, Msg.Types.REQUEST))){
+				System.out.println("Sent: " + Commands.GET_CLIENT_COUNT); 
+			}
+			readLine();
 			
-			if(myClient.sendMessage(new RGBMessage("setAll", 255,127,0))){
+			/*
+			if(myClient.sendMessage(new RGBMessage("setAll", 0,0,0))){
 				System.out.println("Sent: " + "Color");
-			}
+			}/**/
 
 			// wait a little ..
 			try {
@@ -104,23 +110,39 @@ public class ClientApp {
 				System.out.println("InterruptedException in ClientApp");
 			} /**/
 			
-			if(myClient.sendMessage(new Msg("readTemp", Msg.Types.COMMAND))){
-				System.out.println("Sent: " + "readTemp");
-			}
-			
-		}
-		
 
-		// wait before disconnect..
-		try {
-			Thread.sleep(4000);
+			if(myClient.sendMessage(new Msg(Commands.GET_TEMP, Msg.Types.REQUEST))){
+				System.out.println("Sent: " + Commands.GET_TEMP);
+			}
+
+			/*
+			// wait a little ..
+			try {
+				Thread.sleep(5000);
 		} catch (InterruptedException e) {
 			System.out.println("InterruptedException in ClientApp");
 		} /**/
 		
 		
+		}
+		
+
+		readLine();
+
+		
 		myClient.disconnect();
 
+	}
+	
+	private String readLine(){
+		String s = "";
+		try {
+			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+	        s = br.readLine();
+	    }catch(Exception e){
+	    	s = "Exception cought.";
+	    }
+        return s;
 	}
 	
 	public void showOutput(String text){
