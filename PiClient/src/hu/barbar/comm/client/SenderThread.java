@@ -1,7 +1,6 @@
 package hu.barbar.comm.client;
 
-import java.io.IOException;
-import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
 
 import hu.barbar.comm.util.Msg;
 import hu.barbar.util.LogManager;

@@ -1,7 +1,7 @@
 package hu.barbar.comm.client;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 
 import hu.barbar.comm.util.Msg;
 import hu.barbar.util.LogManager;
