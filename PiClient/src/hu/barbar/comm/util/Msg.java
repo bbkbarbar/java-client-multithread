@@ -72,12 +72,16 @@ public class Msg implements Serializable{
 		return new Msg(resolvedContent, resolvedType);
 	}
 
+	protected String removeLBs(String s){
+		return s.replace("\n", " ");
+	}
+	
 	protected String getParameterLine(String item, String value){
 		return item + "=" + value;
 	}
 
 	public String getInstanceAsLine(){
-		return getParameterLine("content", this.content) + Msg.ARGUMENT_SEPARATOR
+		return getParameterLine("content", removeLBs(this.content)) + Msg.ARGUMENT_SEPARATOR
 			 + getParameterLine("type", this.type + "")
 		;
 	}
