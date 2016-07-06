@@ -6,18 +6,19 @@ import java.io.InputStreamReader;
 import hu.barbar.comm.client.Client;
 import hu.barbar.comm.util.Commands;
 import hu.barbar.comm.util.Msg;
+import hu.barbar.comm.util.RGBMessage;
 import hu.barbar.util.LogManager;
 
 public class ClientApp {
 
 	private static ClientApp me = null;
 
-	private static final boolean DEBUG_MODE = false;
+	private static final boolean DEBUG_MODE = true;
 
 	public static String ver = "0.1";
-	public static final String DEFAULT_SERVER_HOSTNAME = (DEBUG_MODE ? "localhost" : "barbarhome.ddns.net");
+	public static final String DEFAULT_SERVER_HOSTNAME = (DEBUG_MODE ? "barbarhome.ddns.net" : "localhost");
 	//public static final String DEFAULT_SERVER_HOSTNAME = (DEBUG_MODE ? "localhost" : "192.168.0.101");
-	public static final int DEFAULT_SERVER_PORT = (DEBUG_MODE ? 13003 : 10714);
+	public static final int DEFAULT_SERVER_PORT = (DEBUG_MODE ? 10714 : 13003 );
 
 	public String SERVER_HOSTNAME = DEFAULT_SERVER_HOSTNAME;
 	public int SERVER_PORT = -1;
@@ -96,12 +97,7 @@ public class ClientApp {
 			}
 			readLine();
 
-			if(myClient.sendMessage(new Msg(Commands.GET_CLIENT_COUNT, Msg.Types.REQUEST))){
-				System.out.println("Sent: " + Commands.GET_CLIENT_COUNT); 
-			}
-			readLine();
 			
-			/*
 			if(myClient.sendMessage(new RGBMessage("setAll", 0,0,0))){
 				System.out.println("Sent: " + "Color");
 			}/**/
