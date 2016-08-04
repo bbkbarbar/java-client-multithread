@@ -16,9 +16,9 @@ public class ClientApp {
 	private static final boolean DEBUG_MODE = true;
 
 	public static String ver = "0.1";
-	public static final String DEFAULT_SERVER_HOSTNAME = (DEBUG_MODE ? "barbarhome.ddns.net" : "localhost");
+	public static final String DEFAULT_SERVER_HOSTNAME = (DEBUG_MODE ? "localhost" : "barbarhome.ddns.net");
 	//public static final String DEFAULT_SERVER_HOSTNAME = (DEBUG_MODE ? "localhost" : "192.168.0.101");
-	public static final int DEFAULT_SERVER_PORT = (DEBUG_MODE ? 10714 : 13003 );
+	public static final int DEFAULT_SERVER_PORT = (DEBUG_MODE ? 10710 : 10713 );
 
 	public String SERVER_HOSTNAME = DEFAULT_SERVER_HOSTNAME;
 	public int SERVER_PORT = -1;
